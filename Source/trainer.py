@@ -99,11 +99,11 @@ class ModelTrainer:
                 for phase, true, pred in zip(phase_names, true_values, pred_values):
                     local_true = true[target["name"]]
                     local_pred = pred[target["name"]]
-                    mask = ~np.isnan(local_true)
+                    # mask = ~np.isnan(local_true)
 
                     metric, params = target["metrics"][metric_name]
                     key = f"{target['name']}_{phase}_{metric_name}"
-                    res = metric(local_true[mask], local_pred[mask], **params)
+                    res = metric(local_true, local_pred, **params)
                     results_dict[key] = float(res) if np.prod(res.shape) == 1 else res.tolist()
 
         return results_dict

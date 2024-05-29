@@ -14,8 +14,8 @@ Repository with multi-input graph neural network for modeling metal complexes st
 conda install pytorch==2.0.0 torchvision==0.15.0 torchaudio==2.0.0 pytorch-cuda=11.8 -c pytorch -c nvidia
 conda install pyg -c pyg
 conda install dgl -c dglteam/label/cu118
-conda install pytorch-lightning rdkit -c conda-forge
-conda install pip tqdm loguru optuna pandas 
+conda install pytorch-lightning rdkit optuna -c conda-forge
+conda install pip tqdm loguru pandas 
 pip install notebook numba scikit-learn selfies tensorboard dgllife
 ```
 ### If you use non-GPU machine
@@ -23,8 +23,8 @@ pip install notebook numba scikit-learn selfies tensorboard dgllife
 conda install pytorch==2.0.0 torchvision==0.15.0 torchaudio==2.0.0 cpuonly -c pytorch
 conda install pyg -c pyg
 conda install dgl -c dglteam 
-conda install pytorch-lightning rdkit -c conda-forge
-conda install pip tqdm loguru optuna pandas
+conda install pytorch-lightning rdkit optuna -c conda-forge
+conda install pip tqdm loguru pandas
 pip install notebook numba scikit-learn selfies tensorboard dgllife
 ````
 5. To train model on default data
