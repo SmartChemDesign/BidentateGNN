@@ -23,7 +23,7 @@ time_mark = str(datetime.now()).replace(" ", "_").replace("-", "_").replace(":",
 
 # Here we gather all available metals to single list to later load corresponding ligands and stability constant values
 Ln_metals = ['La', 'Ce', 'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb', 'Lu', ]
-Ac_metals = ['Th', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf']
+Ac_metals = ['Am', 'Cm', 'Bk', 'Cf']
 train_metals = list(set(["Y", "Sc"] + Ln_metals + Ac_metals))
 
 # training parameters
