@@ -151,8 +151,9 @@ def featurize_sdf_with_metal_and_conditions(path_to_sdf=None, molecules=None, mo
     elif path_to_sdf is not None and molecules is not None:
         raise ValueError("Only one source ('path_to_sdf' or 'molecules' parameter) should be stated, got both")
     mols = molecules or [mol for mol in Chem.SDMolSupplier(path_to_sdf) if mol is not None]
-    mol_features = [mol_featurizer.featurize(m) for m in mols]
+    smiles = [Chem.MolToSmiles(i) for i in mols]
 
+    mol_features = [mol_featurizer.featurize(m) for m in mols]
     all_data = []
     for mol_ind in range(len(mols)):
         metals = []
@@ -172,9 +173,11 @@ def featurize_sdf_with_metal_and_conditions(path_to_sdf=None, molecules=None, mo
             features.y = {"logK": torch.tensor([[logK]])}
             all_data += [features]
 
-    if shuffle: random.Random(seed).shuffle(all_data)
+    if shuffle: 
+        random.Random(seed).shuffle(all_data)
+        random.Random(seed).shuffle(smiles)
 
-    return all_data
+    return all_data, smiles
 
 
 class Complex:

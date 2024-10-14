@@ -1,6 +1,7 @@
 import logging
 import os.path
 from datetime import datetime
+import json
 
 import torch
 from sklearn.metrics import r2_score, mean_absolute_error
@@ -8,7 +9,7 @@ from torch import nn
 from torch_geometric.nn import global_mean_pool, MFConv
 from tqdm import tqdm
 
-from Source.data import balanced_train_valid_split, root_mean_squared_error
+from Source.data import balanced_train_valid_split, root_mean_squared_error, tanimoto_train_valid_split
 from Source.trainer import GCNNTrainer
 from Source.GCNN_FCNN.featurizers import SkipatomFeaturizer, featurize_sdf_with_metal_and_conditions
 from Source.GCNN_FCNN.model import GCNN_FCNN
@@ -25,14 +26,13 @@ Ac_metals = ['Am', 'Cm', 'Bk', 'Cf']
 train_metals = list(set(["Y", "Sc"] + Ln_metals + Ac_metals))
 
 # training parameters
-cv_folds = 5
 seed = 23
 batch_size = 64
-epochs = 1
+epochs = 1000
 es_patience = 100
 mode = "regression"
 train_sdf_folder = ROOT_DIR / "Data/OneM_cond_adds"
-output_folder = ROOT_DIR / f"Models/{cv_folds}fold_{mode}_{time_mark}"
+output_folder = ROOT_DIR / f"Models/fold_{mode}_{time_mark}"
 
 # target description
 targets = ({"name": "logK",
@@ -84,16 +84,21 @@ model_parameters = {
 
 # convert all data from .sdf files to data objects
 train_datasets = [featurize_sdf_with_metal_and_conditions(path_to_sdf=os.path.join(train_sdf_folder, f"{metal}.sdf"),
-                                                          mol_featurizer=ConvMolFeaturizer(),
-                                                          metal_featurizer=SkipatomFeaturizer())
-                  for metal in tqdm(train_metals, desc="Featurizig")]
+                                                        mol_featurizer=ConvMolFeaturizer(),
+                                                        metal_featurizer=SkipatomFeaturizer())
+                for metal in tqdm(train_metals, desc="Featurizig")]
+
+smiles = [i[1] for i in train_datasets]
+train_datasets = [i[0] for i in train_datasets]
 
 # split dataset to train and valid
 logging.info("Splitting...")
-folds = balanced_train_valid_split(train_datasets, n_folds=cv_folds,
-                                   batch_size=batch_size,
-                                   shuffle_every_epoch=True,
-                                   seed=seed)
+folds = balanced_train_valid_split(train_datasets, n_folds=5,
+                                batch_size=batch_size,
+                                shuffle_every_epoch=True,
+                                seed=seed)
+
+
 # init model object
 model = GCNN_FCNN(
     metal_features=next(iter(folds[0][0])).metal_x.shape[-1],

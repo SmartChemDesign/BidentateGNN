@@ -1,13 +1,91 @@
 import random
 
 import numpy as np
+from scipy.spatial.distance import rogerstanimoto
 from sklearn.metrics import mean_squared_error
+from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.model_selection import KFold, train_test_split
+from sklearn.cluster import KMeans, DBSCAN
+from sklearn.utils.extmath import row_norms
+import sklearn
 from torch_geometric.loader import DataLoader
+from rdkit import Chem
+
+
+class TaniKMeans(sklearn.cluster.KMeans):
+    def __init__(
+        self,
+        n_clusters=8,
+        *,
+        init="k-means++",
+        n_init=10,
+        max_iter=300,
+        tol=1e-4,
+        verbose=0,
+        random_state=None,
+        copy_x=True,
+        algorithm="elkan",
+    ):
+        super().__init__(
+            n_clusters=n_clusters,
+            init=init,
+            n_init=n_init,
+            max_iter=max_iter,
+            tol=tol,
+            verbose=verbose,
+            random_state=random_state,
+            copy_x=copy_x,
+            algorithm=algorithm
+        )
+
+    def _transform(self, X):
+        return pairwise_distances(X, metric="jaccard", n_jobs=self.n_clusters)
+
 
 
 def root_mean_squared_error(*args, **kwargs):
     return np.sqrt(mean_squared_error(*args, **kwargs))
+
+
+def tanimoto_train_valid_split(datasets_smiles, datasets, n_folds, batch_size, shuffle_every_epoch, valid_size=None, seed=17):
+    train = [[] for _ in range(n_folds)]
+    val = [[] for _ in range(n_folds)]
+    train_smiles = [[] for _ in range(n_folds)]
+    val_smiles = [[] for _ in range(n_folds)]
+    dataset_clusters = {i: [] for i in range(n_folds)}
+    unique_smiles = list()
+
+    for smiles in datasets_smiles:
+        unique_smiles.extend(smiles)
+    unique_smiles = np.unique(unique_smiles)
+    unique_fingerprints = [Chem.RDKFingerprint(Chem.MolFromSmiles(i)) for i in unique_smiles]
+    unique_fingerprints = np.array([np.frombuffer(i.ToBitString().encode(), 'u1') - ord('0') for i in unique_fingerprints])
+    kmeans = TaniKMeans(n_clusters=n_folds).fit(unique_fingerprints)
+    smiles_labels = {smiles: label for smiles, label in zip(unique_smiles, kmeans.labels_)}
+
+    for dataset, smiles_list in zip(datasets, datasets_smiles):
+        mol_ids = list(range(len(dataset)))
+
+        for fold_ind in range(n_folds):
+            train[fold_ind] += [val for val, smiles in zip(dataset, smiles_list) if smiles_labels[smiles] != fold_ind]
+            val[fold_ind] += [val for val, smiles in zip(dataset, smiles_list) if smiles_labels[smiles] == fold_ind]
+            
+            train_smiles[fold_ind] += [smiles for smiles in smiles_list if smiles_labels[smiles] != fold_ind]
+            val_smiles[fold_ind] += [smiles for smiles in smiles_list if smiles_labels[smiles] == fold_ind]
+
+    for fold_ind in range(n_folds):
+        random.Random(seed).shuffle(train[fold_ind])
+        random.Random(seed).shuffle(val[fold_ind])
+
+        random.Random(seed).shuffle(train_smiles[fold_ind])
+        random.Random(seed).shuffle(val_smiles[fold_ind])
+
+
+    train_loaders = [DataLoader(train[fold_ind], batch_size=batch_size, shuffle=shuffle_every_epoch)
+                     for fold_ind in range(n_folds)]
+    valid_loaders = [DataLoader(val[fold_ind], batch_size=batch_size, shuffle=shuffle_every_epoch)
+                     for fold_ind in range(n_folds)]
+    return list(zip(train_loaders, valid_loaders)), [train_smiles, val_smiles]
 
 
 def balanced_train_valid_split(datasets, n_folds, batch_size, shuffle_every_epoch, valid_size=None, seed=17):
