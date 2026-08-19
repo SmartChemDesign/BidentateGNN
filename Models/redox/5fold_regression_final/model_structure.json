@@ -1,0 +1,73 @@
+{
+  "solvent_features": 7,
+  "node_features": 75,
+  "targets": "({'name': 'E', 'mode': 'regression', 'dim': 1, 'metrics': {'R2': (<function r2_score at 0x7f4144878af0>, {}), 'RMSE': (<function root_mean_squared_error at 0x7f40a4b18790>, {}), 'MAE': (<function mean_absolute_error at 0x7f4144878280>, {})}, 'loss': MSELoss()},)",
+  "solvent_fc_params": {
+    "hidden": [
+      64,
+      32
+    ],
+    "actf": "LeakyReLU(negative_slope=0.01)",
+    "dropout": 0.22468741076252172,
+    "use_bn": false,
+    "use_out_sequential": false,
+    "targets": [],
+    "input_features": 6
+  },
+  "gcnn_params": {
+    "pre_fc_params": {
+      "hidden": [],
+      "dropout": 0.0,
+      "use_bn": false,
+      "actf": "ReLU()",
+      "use_out_sequential": false,
+      "targets": [],
+      "input_features": 75
+    },
+    "hidden_conv": [
+      512,
+      512,
+      512
+    ],
+    "conv_dropout": 0.22380490394118516,
+    "conv_actf": "ReLU()",
+    "conv_layer": "<class 'torch_geometric.nn.conv.gat_conv.GATConv'>",
+    "conv_parameters": null,
+    "graph_pooling": "<function global_mean_pool at 0x7f40856f20e0>",
+    "post_fc_params": {
+      "hidden": [
+        512
+      ],
+      "actf": "ReLU()",
+      "dropout": 0.0,
+      "use_bn": true,
+      "use_out_sequential": false,
+      "targets": [],
+      "input_features": 512
+    },
+    "use_out_sequential": false,
+    "targets": [],
+    "node_features": 75
+  },
+  "post_fc_params": {
+    "hidden": [
+      32
+    ],
+    "actf": "PReLU(num_parameters=1)",
+    "dropout": 0.03572808128707892,
+    "use_bn": false,
+    "use_out_sequential": false,
+    "targets": [],
+    "input_features": 272
+  },
+  "global_pooling": "<class 'source.models.global_poolings.MaxPooling'>",
+  "use_out_sequential": true,
+  "optimizer": "<class 'torch.optim.adam.Adam'>",
+  "optimizer_parameters": {
+    "lr": 0.0015348866748097405,
+    "weight_decay": 7.570460132658095e-06
+  },
+  "hf_loss_weight": 0.8,
+  "lf_loss_weight": 0.2,
+  "data_type_index": -2
+}
