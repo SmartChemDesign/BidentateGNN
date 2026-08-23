@@ -2,7 +2,7 @@ from pathlib import Path
 from torch import nn
 from torch_geometric.nn import global_mean_pool, MFConv
 
-path_to_sdf = 'Data/redox/dataset/exp_only/S2_exp_dataset.sdf'
+path_to_sdf = 'Data/redox/dataset/exp_only/exp_dataset.sdf'
 cv_folds = 5
 seed = 42
 batch_size = 64
