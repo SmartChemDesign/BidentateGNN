@@ -15,9 +15,6 @@ PATH_TO_SDF = "Data/redox/dataset/calc_exp/exp_calc_dataset.sdf"
 SOLVENT_DB_PATH = "Data/redox/additional/solvent_properties.csv"
 SOLVENT_MODE = "descriptors"
 
-# Path to per-solvent linear calibration coefficients (E_lf = a * E_calc + b).
-# Columns: solvent, redox_type, a, b, r2, p_value, n_points, source
-CALIBRATION_COEFFICIENTS_PATH = "Data/redox/additional/calibration_coefficients.csv"
 
 # (canonical_solvent_smiles, redox_type) pairs excluded from LF (calc) training data.
 # Exclusion criteria: p >= 0.05 OR R^2 < 0.5 OR global_fallback (no threshold on n).

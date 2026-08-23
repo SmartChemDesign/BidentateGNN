@@ -20,7 +20,7 @@ from Source.GCNN_FCNN.old_featurizer import ConvMolFeaturizer
 from Source.trainer_redox import ModelTrainer
 
 from config import (
-    BATCH_SIZE, CALIBRATION_COEFFICIENTS_PATH, CV_FOLDS, DATA_TYPE_INDEX,
+    BATCH_SIZE, CV_FOLDS, DATA_TYPE_INDEX,
     EPOCHS, ES_PATIENCE, EXCLUDED_LF_PAIRS,
     HF_LOSS_WEIGHT, LF_LOSS_WEIGHT, OUTPUT_FOLDER,
     PATH_TO_SDF, SCALE_SOLVENT, SEED, SOLVENT_DB_PATH, SOLVENT_MODE,
@@ -43,7 +43,6 @@ def main():
         output_dataset_path=str(OUTPUT_FOLDER / "dataset.csv"),
         output_model_dataset_path=str(OUTPUT_FOLDER / "model_dataset.csv"),
         scaler_save_path=str(OUTPUT_FOLDER / "scaler.joblib"),
-        calibration_coefficients_path=str(CALIBRATION_COEFFICIENTS_PATH),
         excluded_lf_pairs=EXCLUDED_LF_PAIRS,
     )
 
