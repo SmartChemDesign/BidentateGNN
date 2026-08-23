@@ -11,7 +11,7 @@ from torch_geometric.nn import GATConv, global_mean_pool
 
 from Source.global_poolings import MaxPooling
 
-PATH_TO_SDF = "Data/redox/dataset/calc_exp/S4_exp_calc_dataset.sdf"
+PATH_TO_SDF = "Data/redox/dataset/calc_exp/exp_calc_dataset.sdf"
 SOLVENT_DB_PATH = "Data/redox/additional/solvent_properties.csv"
 SOLVENT_MODE = "descriptors"
 

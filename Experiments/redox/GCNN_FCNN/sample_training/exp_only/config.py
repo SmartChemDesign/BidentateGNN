@@ -12,7 +12,7 @@ from sklearn.metrics import mean_absolute_error, r2_score
 from Source.data import root_mean_squared_error
 
 # Input data
-path_to_sdf = "Data/redox/dataset/exp_only/S2_exp_dataset.sdf"
+path_to_sdf = "Data/redox/dataset/exp_only/exp_dataset.sdf"
 solvent_db_path = "Data/redox/additional/solvent_properties.csv"
 scale_solvent = True
 
