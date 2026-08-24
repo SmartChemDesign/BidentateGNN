@@ -7,7 +7,7 @@ a common featurization, training and evaluation codebase:
 |---|---|---|
 | **redox** | Oxidation and reduction potentials of organic molecules in solution | experimental + quantum-chemically calculated |
 | **logK** | Stability constants of metal complexes | experimental |
-| **solubility** | <!-- TODO: describe the property and units --> | <!-- TODO --> |
+| **solubility** | Decimal logarithm of solubility (logS) | experimental |
 
 All models combine a molecular graph branch (GCNN) with a branch encoding the
 chemical environment — solvent descriptors for redox and solubility, metal and
@@ -122,4 +122,53 @@ a stricter estimate of generalization.
 
 ## Solubility
 
-<!-- TODO: document data placement, training and prediction for this task. -->
+Models predict the decimal logarithm of solubility (logS). Two model variants are
+provided (use theoretical or experimental descriptors for solvents).
+
+### Data
+
+`bigsoldb_full.sdf`, `bigsoldb_test.sdf`, `bigsoldb_train.sdf`, located in `Data/solubility/`.
+
+`solvent_properties_2.0.csv` is a reference table containing 8 physicochemical characteristics for 31 solvents, used to generate solvent descriptor vectors.
+
+### Theoretical descriptors model
+
+Uses a set of theoretical descriptors. Some of them are optional:
+- `eps`: dielectric permittivity
+- `BP_mols`: boiling point of molecules
+- `BP_solvs`: boiling point of solvents
+- `dG`: predicted Gibbs free energy of solvation
+
+#### Training on a pre-split dataset (example with all optional descriptors)
+
+```bash
+bash Experiments/solubility/theoretical/train_main_all.sh
+```
+
+### Experimental descriptors model
+
+Uses experimental descriptors with an option to include MACCSKeys.
+
+#### Training on a pre-split dataset (example with MACCSKeys)
+
+```bash
+bash Experiments/solubility/experimental/train_main.sh
+```
+
+#### Investigation of model performance with new solvents (example with MACCSKeys)
+
+```bash
+bash Experiments/solubility/experimental/new_solvents_trains_maccskeys.sh
+```
+
+### Output layout
+
+```
+Models/solubility/{theoretical,experimental}_descriptors/<experiment_name>/
+    fold_<n>/best_model, losses.json, metrics.json
+    model_structure.json, model_config.torch
+    metrics.json (aggregated over folds), test_pred, test_true (values for simple visualization)
+```
+
+Test metrics are computed for the ensemble of per-fold models, whose prediction is
+the mean across folds.
