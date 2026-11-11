@@ -22,6 +22,7 @@ Output layout under the folder passed as output_folder:
 from __future__ import annotations
 
 import copy
+import gc
 import json
 import logging
 from collections import defaultdict
@@ -43,7 +44,7 @@ logger = logging.getLogger(__name__)
 # Row order of the exported prediction tables: oxidation, reduction, then the rest
 REDOX_ORDER = {"ox": 0, "red": 1}
 UNKNOWN_SOLVENT = "unknown"
-PREDICTION_BATCH_SIZE = 64
+PREDICTION_BATCH_SIZE = 1024
 
 
 def _target_values(batch, target_name: str) -> np.ndarray:
@@ -137,7 +138,7 @@ class ModelTrainer:
 
     def __init__(self, model, train_valid_data, test_data=None, output_folder=None,
                  es_patience=20, epochs=1000, save_to_folder=True, seed=42,
-                 targets=(), experiment_logger=None):
+                 targets=(), experiment_logger=None, export_predictions=True):
         """
         Args:
             model: Lightning model instance, deep-copied for every fold.
@@ -150,12 +151,13 @@ class ModelTrainer:
             seed: random seed applied to Lightning and PyTorch Geometric.
             targets: target configuration providing name and metrics.
             experiment_logger: optional ExperimentLogger for human-readable logs.
+            export_predictions: write the per-record prediction tables of every fold
+                (train, val, val_exp); False keeps the weights and metrics only.
         """
         pytorch_lightning.seed_everything(seed)
         torch_geometric.seed_everything(seed)
 
         self.initial_model = model
-        self.models = []
         self.train_valid_data = train_valid_data
         self.test_data = test_data
         self.es_patience = es_patience
@@ -165,15 +167,14 @@ class ModelTrainer:
         self.results_dict = {}
         self.seed = seed
         self.logger = experiment_logger
+        self.export_predictions = export_predictions
+
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
         self.main_folder = Path(output_folder) if output_folder else Path("output/default")
         self.models_folder = self.main_folder / "models"
         self.metrics_folder = self.main_folder / "metrics"
         self.predictions_folder = self.main_folder / "predictions"
-
-    # ------------------------------------------------------------------
-    # Folder and config setup
-    # ------------------------------------------------------------------
 
     def prepare_out_folder(self):
         """Create the output tree and store the model structure and config."""
@@ -186,10 +187,6 @@ class ModelTrainer:
         with open(self.main_folder / "model_structure.json", "w") as f:
             json.dump(self.initial_model.get_model_structure(), f, indent=2)
         torch.save(self.initial_model.config, self.main_folder / "model_config.torch")
-
-    # ------------------------------------------------------------------
-    # Prediction collection and metrics
-    # ------------------------------------------------------------------
 
     def _collect_from_loader(self, model, loader, device="cpu"):
         """Run a model over a loader and return ground truth, predictions and solvents."""
@@ -285,9 +282,6 @@ class ModelTrainer:
 
         return results
 
-    # ------------------------------------------------------------------
-    # Cross-validation loop
-    # ------------------------------------------------------------------
 
     def train_cv_models(self):
         """Train one model per fold, then evaluate the fold ensemble on the test set."""
@@ -315,6 +309,7 @@ class ModelTrainer:
                 )
 
             self.train_model(model, train_dataloader, valid_dataloader, fold_ind, self.epochs)
+            del model
 
         if self.test_data is not None and self.save_to_folder:
             self._evaluate_ensemble()
@@ -385,18 +380,12 @@ class ModelTrainer:
                 },
             })
 
-    # ------------------------------------------------------------------
-    # Single fold training
-    # ------------------------------------------------------------------
-
     def train_model(self, model, train_dataloader, valid_dataloader,
                     current_fold_num, epochs=1000):
         """Train one fold, restore its best checkpoint and export its outputs."""
         fold_models_folder = self.models_folder / f"fold_{current_fold_num + 1}"
         fold_predictions_folder = self.predictions_folder / f"fold_{current_fold_num + 1}"
 
-        # Records without data_type are treated as experimental; when experimental
-        # records are present, model selection is driven by their loss alone
         exp_val_data = [d for d in valid_dataloader.dataset
                         if getattr(d, "data_type", "exp") == "exp"]
         exp_val_loader = (
@@ -446,12 +435,18 @@ class ModelTrainer:
             )
 
         model.eval()
-        self.models.append(model)
 
         if self.save_to_folder:
             self._export_fold(model, train_dataloader, valid_dataloader, exp_val_data,
                               exp_val_loader, current_fold_num,
                               fold_models_folder, fold_predictions_folder)
+
+        # The fold model is reloaded from disk by ModelShell for the ensemble; release
+        # it together with its Lightning trainer (callbacks, loops, dataloader references)
+        del pl_trainer, model, es_callback, checkpoint_callback
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
     def _export_fold(self, model, train_dataloader, valid_dataloader, exp_val_data,
                      exp_val_loader, current_fold_num,
@@ -463,7 +458,7 @@ class ModelTrainer:
                        "valid_loss": model.valid_losses}, f, indent=2)
 
         fold_metrics = self.calculate_fold_metrics(
-            model, train_dataloader, valid_dataloader, exp_val_loader
+            model, train_dataloader, valid_dataloader, exp_val_loader, device=self.device
         )
         self.results_dict[f"fold_{current_fold_num + 1}"] = fold_metrics
         with open(self.metrics_folder / f"fold_{current_fold_num + 1}_metrics.json", "w") as f:
@@ -475,6 +470,8 @@ class ModelTrainer:
                 fold_num=current_fold_num + 1, metrics=fold_metrics, phase="val"
             )
 
+        if not self.export_predictions:
+            return
         target_name = self.targets[0]["name"]
         exports = [
             (train_dataloader.dataset, "train_predictions.csv"),
@@ -485,5 +482,5 @@ class ModelTrainer:
         for data_list, filename in exports:
             write_predictions_csv(
                 data_list, model, str(fold_predictions_folder / filename),
-                target_name=target_name,
+                device=self.device, target_name=target_name,
             )
