@@ -1,7 +1,7 @@
 {
-  "solvent_features": 7,
+  "solvent_features": 10,
   "node_features": 75,
-  "targets": "({'name': 'E', 'mode': 'regression', 'dim': 1, 'metrics': {'R2': (<function r2_score at 0x7f4144878af0>, {}), 'RMSE': (<function root_mean_squared_error at 0x7f40a4b18790>, {}), 'MAE': (<function mean_absolute_error at 0x7f4144878280>, {})}, 'loss': MSELoss()},)",
+  "targets": "({'name': 'E', 'mode': 'regression', 'dim': 1, 'metrics': {'R2': (<function r2_score at 0x7f62b0900940>, {}), 'RMSE': (<function root_mean_squared_error at 0x7f6210d0ca60>, {}), 'MAE': (<function mean_absolute_error at 0x7f62b09000d0>, {})}, 'loss': MSELoss()},)",
   "solvent_fc_params": {
     "hidden": [
       64,
@@ -12,7 +12,7 @@
     "use_bn": false,
     "use_out_sequential": false,
     "targets": [],
-    "input_features": 6
+    "input_features": 9
   },
   "gcnn_params": {
     "pre_fc_params": {
@@ -33,7 +33,7 @@
     "conv_actf": "ReLU()",
     "conv_layer": "<class 'torch_geometric.nn.conv.gat_conv.GATConv'>",
     "conv_parameters": null,
-    "graph_pooling": "<function global_mean_pool at 0x7f40856f20e0>",
+    "graph_pooling": "<function global_mean_pool at 0x7f61ef81e050>",
     "post_fc_params": {
       "hidden": [
         512
@@ -60,7 +60,7 @@
     "targets": [],
     "input_features": 272
   },
-  "global_pooling": "<class 'source.models.global_poolings.MaxPooling'>",
+  "global_pooling": "<class 'Source.global_poolings.MaxPooling'>",
   "use_out_sequential": true,
   "optimizer": "<class 'torch.optim.adam.Adam'>",
   "optimizer_parameters": {
@@ -68,6 +68,6 @@
     "weight_decay": 7.570460132658095e-06
   },
   "hf_loss_weight": 0.8,
-  "lf_loss_weight": 0.2,
-  "data_type_index": -2
+  "lf_loss_weight": 0.19999999999999996,
+  "loss_mode": "multifidelity"
 }
