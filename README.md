@@ -69,17 +69,12 @@ selection.
 | `exp_calc_dataset.sdf` | `Data/redox/dataset/calc_exp/` |
 | `solvent_properties.csv` | `Data/redox/additional/` |
 
-`solvent_properties.csv` holds 9 physical descriptors for 14 solvents and is the
+`solvent_properties.csv` holds 8 physical descriptors for 14 solvents and is the
 reference table for solvent names and SMILES.
 
 ### Training
 
 ```bash
-# Graph-only model on experimental data (separate oxidation and reduction models)
-python3 Experiments/redox/GCNN/train.py
-
-# Model with a solvent branch, experimental data only
-python3 Experiments/redox/GCNN_FCNN/sample_training/exp_only/train.py
 
 # Model with a solvent branch, experimental + calculated data
 python3 Experiments/redox/GCNN_FCNN/sample_training/calc_exp/train.py
